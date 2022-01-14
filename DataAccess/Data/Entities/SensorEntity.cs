@@ -14,5 +14,7 @@ namespace DataAccess.Data.Entities
 
         public Guid SensorTypeId { get; set; }
         public SensorTypeEntity SensorType { get; set; }
+
+        public IList<MeasurementEntity> Measurements { get; set; }
     }
 }

@@ -6,7 +6,7 @@ namespace Common.Dto
 {
     public class MeasurementDto
     {
-        public Guid? Id { get; set; }
+        public Guid Id { get; set; }
         public double? Value { get; set; }
         public string Unit { get; set; }
         public DateTime? TimeStamp { get; set; }

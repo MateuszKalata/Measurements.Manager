@@ -11,5 +11,8 @@ namespace DataAccess.Data.Entities
         public string Name { get; set; }
         public string Unit { get; set; }
 
+        public IList<ValidationRuleEntity> ValidationRules { get; set; }
+        public IList<NotificationRuleEntity> NotificationRules { get; set; }
+
     }
 }

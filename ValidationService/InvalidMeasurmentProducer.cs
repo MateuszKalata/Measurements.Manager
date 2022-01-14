@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ValidationService
@@ -14,6 +15,7 @@ namespace ValidationService
 
         public InvalidMeasurmentProducer()
         {
+            // TODO: Use config here in the featrure for Producer Config and topic
             ProducerConfig config = new ProducerConfig()
             {
                 BootstrapServers = "localhost:9092"
@@ -23,10 +25,23 @@ namespace ValidationService
 
         public async Task ProduceInvalidMeasurement(MeasurementDto measurement, string errorMsg)
         {
-            //Map Dto to InvalidMeasurement
+            var invalidMeasurement = new InvalidMeasurementDto()
+            {
+                Id = measurement.Id,
+                SensorId = measurement.SensorId,
+                TimeStamp = measurement.TimeStamp,
+                Value = measurement.Value,
+                Unit = measurement.Unit,
+                ErrorMessage = errorMsg
+            };
 
-            //persist invalis measurement
-            await producer.ProduceAsync("invalidmeasurements", new Message<string, string>() { Key = "", Value = "" });
+            var msg = new Message<string, string>()
+            {
+                Key = invalidMeasurement.Id.ToString(),
+                Value = JsonSerializer.Serialize(invalidMeasurement)
+            };
+
+            await producer.ProduceAsync("invalidmeasurements", msg); // TODO: handle dalivery
         }
     }
 }

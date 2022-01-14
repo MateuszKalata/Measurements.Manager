@@ -19,7 +19,7 @@ namespace Measurements.API.Services.Measurements
         public MeasurementsService( KafkaDependentProducer<string, string> kafkaDependentProducer )
         {
             this.kafkaDependentProducer = kafkaDependentProducer;
-            // Use config here in the featrure
+            // Use config here in the featrure for topic
         }
 
         public async Task SaveMeasurements(MeasurementDto measurementDto)

@@ -14,6 +14,7 @@ namespace ValidationService
 
         public ValidMeasurmentProducer()
         {
+            // TODO: Use config here in the featrure for Producer Config and topic
             ProducerConfig config = new ProducerConfig()
             {
                 BootstrapServers = "localhost:9092"

@@ -13,7 +13,8 @@ namespace Measurements.API.Services.KafkaProducer
 
         public KafkaProducerHandle(/*IConfiguration config*/)
         {
-            //config.GetSection("Kafka:ProducerSettings").Bind(conf);
+            // Use config here in the featrure producer config
+            // config.GetSection("Kafka:ProducerSettings").Bind(conf);
             var conf = new ProducerConfig
             {
                 BootstrapServers = "localhost:9092",//docker.for.win.

@@ -48,7 +48,7 @@ namespace ValidatedMsgSaver
                         var context = MeasurementsContextBuilder.BuildMeasurementsContext();
                         context.Measurements.Add(new MeasurementEntity()
                         {
-                            Id = measurement.Id.Value,
+                            Id = measurement.Id,
                             Value = measurement.Value.Value,
                             Unit = measurement.Unit,
                             TimeStamp = measurement.TimeStamp.Value,

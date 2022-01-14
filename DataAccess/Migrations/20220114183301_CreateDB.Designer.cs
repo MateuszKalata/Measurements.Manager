@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MeasurementsContext))]
-    [Migration("20220114132949_CreateDB")]
+    [Migration("20220114183301_CreateDB")]
     partial class CreateDB
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -31,6 +31,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("SensorEntityId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("SensorId")
                         .HasColumnType("uniqueidentifier");
 
@@ -44,6 +47,8 @@ namespace DataAccess.Migrations
                         .HasColumnType("float");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SensorEntityId");
 
                     b.ToTable("Measurements");
 
@@ -88,6 +93,9 @@ namespace DataAccess.Migrations
                     b.Property<int>("RuleType")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("SensorTypeEntityId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("SensorTypeId")
                         .HasColumnType("uniqueidentifier");
 
@@ -95,6 +103,8 @@ namespace DataAccess.Migrations
                         .HasColumnType("float");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SensorTypeEntityId");
 
                     b.ToTable("NotificationRules");
                 });
@@ -147,11 +157,14 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("EmergencyMsg")
+                    b.Property<string>("ErrorMsg")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RuleType")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("SensorTypeEntityId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("SensorTypeId")
                         .HasColumnType("uniqueidentifier");
@@ -160,6 +173,8 @@ namespace DataAccess.Migrations
                         .HasColumnType("float");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SensorTypeEntityId");
 
                     b.ToTable("ValidationRules");
                 });
@@ -174,6 +189,20 @@ namespace DataAccess.Migrations
                     b.HasDiscriminator().HasValue("InvalidMesurementEntity");
                 });
 
+            modelBuilder.Entity("DataAccess.Data.Entities.MeasurementEntity", b =>
+                {
+                    b.HasOne("DataAccess.Data.Entities.SensorEntity", null)
+                        .WithMany("Measurements")
+                        .HasForeignKey("SensorEntityId");
+                });
+
+            modelBuilder.Entity("DataAccess.Data.Entities.NotificationRuleEntity", b =>
+                {
+                    b.HasOne("DataAccess.Data.Entities.SensorTypeEntity", null)
+                        .WithMany("NotificationRules")
+                        .HasForeignKey("SensorTypeEntityId");
+                });
+
             modelBuilder.Entity("DataAccess.Data.Entities.SensorEntity", b =>
                 {
                     b.HasOne("DataAccess.Data.Entities.SensorTypeEntity", "SensorType")
@@ -183,6 +212,25 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("SensorType");
+                });
+
+            modelBuilder.Entity("DataAccess.Data.Entities.ValidationRuleEntity", b =>
+                {
+                    b.HasOne("DataAccess.Data.Entities.SensorTypeEntity", null)
+                        .WithMany("ValidationRules")
+                        .HasForeignKey("SensorTypeEntityId");
+                });
+
+            modelBuilder.Entity("DataAccess.Data.Entities.SensorEntity", b =>
+                {
+                    b.Navigation("Measurements");
+                });
+
+            modelBuilder.Entity("DataAccess.Data.Entities.SensorTypeEntity", b =>
+                {
+                    b.Navigation("NotificationRules");
+
+                    b.Navigation("ValidationRules");
                 });
 #pragma warning restore 612, 618
         }

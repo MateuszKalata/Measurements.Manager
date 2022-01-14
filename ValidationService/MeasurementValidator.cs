@@ -25,6 +25,7 @@ namespace ValidationService
 
         public MeasurementValidator()
         {
+            // TODO: Use config here in the featrure for topic & Consumer Config
             validMeasurmentProducer = new ValidMeasurmentProducer();
             invalidMeasurmentProducer = new InvalidMeasurmentProducer();
             validator = new ValidationLogic();
@@ -35,7 +36,7 @@ namespace ValidationService
 
             CancellationTokenSource cts = new CancellationTokenSource();
             Console.CancelKeyPress += (_, e) => {
-                e.Cancel = true; // prevent the process from terminating.
+                e.Cancel = true;
                 cts.Cancel();
             };
 
@@ -44,32 +45,31 @@ namespace ValidationService
                 consumer.Subscribe(measurementsStreamTopic);
                 try
                 {
-                    Console.WriteLine("Processing started ...");
+                    Console.WriteLine("Validation started ..."); // TODO: change to LOG
                     while (true)
                     {
                         Console.WriteLine("Looking for next item:");
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed event from topic {measurementsStreamTopic}\n| Key: {cr.Message.Key} | Value: {cr.Message.Value} | Timestamp: {cr.Message.Timestamp} |");
-                        MeasurementDto measurement;
-                        measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
+                        Console.WriteLine($"Consumed event from topic {measurementsStreamTopic}\n| Key: {cr.Message.Key} | Value: {cr.Message.Value} | Timestamp: {cr.Message.Timestamp} |"); // TODO: change to LOG
+                        MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
 
                         var result = validator.Validate(measurement);
 
                         if (string.IsNullOrEmpty(result))
                         {
-                            Console.WriteLine($"Measurement: {cr.Message.Key} is valid.");
+                            Console.WriteLine($"Measurement: {cr.Message.Key} is valid."); // TODO: change to LOG
                             validMeasurmentProducer.ProduceValidMsg(cr.Message);
                         }
                         else
                         {
-                            Console.WriteLine($"Measurement: {cr.Message.Key} is NOT valid.");
+                            Console.WriteLine($"Measurement: {cr.Message.Key} is NOT valid."); // TODO: change to LOG
                             invalidMeasurmentProducer.ProduceInvalidMeasurement(measurement, result);
                         }                        
                     }
                 }
                 catch (OperationCanceledException)
                 {
-                    // Ctrl-C was pressed.
+                    // Ctrl+C was pressed.
                 }
                 finally
                 {
