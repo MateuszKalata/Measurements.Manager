@@ -8,6 +8,6 @@ namespace Common.Enums
     {
         Info = 1,
         Warn = 2,
-        Error = 3
+        Emergency = 3
     }
 }

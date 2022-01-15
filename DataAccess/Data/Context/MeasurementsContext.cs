@@ -15,6 +15,7 @@ namespace DataAccess.Data.Context
         public DbSet<SensorEntity> Sensors { get; set; }
         public DbSet<SensorTypeEntity> SensorTypes { get; set; }
         public DbSet<ValidationRuleEntity> ValidationRules { get; set; }
+        public DbSet<AlertsConfigEntity> AlertsConfigs { get; set; }
 
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

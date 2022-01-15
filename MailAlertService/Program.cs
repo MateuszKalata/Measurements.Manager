@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using System.Net.Mail;
 
 namespace MailAlertService
 {
@@ -6,7 +8,10 @@ namespace MailAlertService
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var notificationAlertsSender = new NotificationsConsumer();
+            notificationAlertsSender.ConsumeNotifications();
         }
+
+        
     }
 }

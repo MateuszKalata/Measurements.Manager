@@ -3,28 +3,28 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Measurements.API", "Measurements.API\Measurements.API.csproj", "{8726490F-8B60-40F7-A295-7096AD12CC0D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Measurements.API", "Measurements.API\Measurements.API.csproj", "{8726490F-8B60-40F7-A295-7096AD12CC0D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{11E3F86A-04D3-41F8-925A-040E5F607C36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{11E3F86A-04D3-41F8-925A-040E5F607C36}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kafka", "Kafka", "{822235E9-3D4C-4130-B631-86A9E4B1136B}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValidationService", "ValidationService\ValidationService.csproj", "{D88C2D4E-9F11-442E-8F37-FA0D6D2BD616}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidationService", "ValidationService\ValidationService.csproj", "{D88C2D4E-9F11-442E-8F37-FA0D6D2BD616}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestDataProducer", "TestDataProducer\TestDataProducer.csproj", "{319B5204-6D8B-4FFE-957E-DBE119DF2457}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidatedMsgSaver", "ValidatedMsgSaver\ValidatedMsgSaver.csproj", "{8917A6F5-3053-403B-B2C5-7142B3996E65}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ValidatedMsgSaver", "ValidatedMsgSaver\ValidatedMsgSaver.csproj", "{8917A6F5-3053-403B-B2C5-7142B3996E65}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicAnalizer", "BasicAnalizer\BasicAnalizer.csproj", "{281DF2AD-C959-4295-8193-2C66FA41147D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicAnalizer", "BasicAnalizer\BasicAnalizer.csproj", "{281DF2AD-C959-4295-8193-2C66FA41147D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationsSaver", "NotificationsSaver\NotificationsSaver.csproj", "{600CC7DD-183C-4515-8F94-D9D17836C569}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationsSaver", "NotificationsSaver\NotificationsSaver.csproj", "{600CC7DD-183C-4515-8F94-D9D17836C569}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MailAlertService", "MailAlertService\MailAlertService.csproj", "{DB67EFC3-6D23-4335-A954-6060E91065D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MailAlertService", "MailAlertService\MailAlertService.csproj", "{DB67EFC3-6D23-4335-A954-6060E91065D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccess", "DataAccess\DataAccess.csproj", "{714A9AD1-5097-4EE3-9409-279A07D054F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\DataAccess.csproj", "{714A9AD1-5097-4EE3-9409-279A07D054F7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvalidMsgSaver", "InvalidMsgSaver\InvalidMsgSaver.csproj", "{41B04889-3E11-49AF-9879-146D91142591}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,10 +44,6 @@ Global
 		{D88C2D4E-9F11-442E-8F37-FA0D6D2BD616}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D88C2D4E-9F11-442E-8F37-FA0D6D2BD616}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D88C2D4E-9F11-442E-8F37-FA0D6D2BD616}.Release|Any CPU.Build.0 = Release|Any CPU
-		{319B5204-6D8B-4FFE-957E-DBE119DF2457}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{319B5204-6D8B-4FFE-957E-DBE119DF2457}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{319B5204-6D8B-4FFE-957E-DBE119DF2457}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{319B5204-6D8B-4FFE-957E-DBE119DF2457}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8917A6F5-3053-403B-B2C5-7142B3996E65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8917A6F5-3053-403B-B2C5-7142B3996E65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8917A6F5-3053-403B-B2C5-7142B3996E65}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -68,6 +64,10 @@ Global
 		{714A9AD1-5097-4EE3-9409-279A07D054F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{714A9AD1-5097-4EE3-9409-279A07D054F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{714A9AD1-5097-4EE3-9409-279A07D054F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41B04889-3E11-49AF-9879-146D91142591}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41B04889-3E11-49AF-9879-146D91142591}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41B04889-3E11-49AF-9879-146D91142591}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41B04889-3E11-49AF-9879-146D91142591}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
