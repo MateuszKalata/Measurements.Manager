@@ -6,7 +6,8 @@ namespace NotificationsSaver
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            NotificationSaver notificationSaver = new NotificationSaver();
+            notificationSaver.ConsumeNotifications();
         }
     }
 }
