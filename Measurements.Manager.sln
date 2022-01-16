@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidationService", "Valida
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ValidatedMsgSaver", "ValidatedMsgSaver\ValidatedMsgSaver.csproj", "{8917A6F5-3053-403B-B2C5-7142B3996E65}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicAnalizer", "BasicAnalizer\BasicAnalizer.csproj", "{281DF2AD-C959-4295-8193-2C66FA41147D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BasicAnalyzer", "BasicAnalizer\BasicAnalyzer.csproj", "{281DF2AD-C959-4295-8193-2C66FA41147D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotificationsSaver", "NotificationsSaver\NotificationsSaver.csproj", "{600CC7DD-183C-4515-8F94-D9D17836C569}"
 EndProject

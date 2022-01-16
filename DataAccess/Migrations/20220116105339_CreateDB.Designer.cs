@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(MeasurementsContext))]
-    [Migration("20220114183301_CreateDB")]
+    [Migration("20220116105339_CreateDB")]
     partial class CreateDB
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -21,15 +21,51 @@ namespace DataAccess.Migrations
                 .HasAnnotation("ProductVersion", "5.0.13")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("DataAccess.Data.Entities.MeasurementEntity", b =>
+            modelBuilder.Entity("DataAccess.Data.Entities.AlertsConfigEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
+                    b.Property<string>("Mail")
                         .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AlertsConfigs");
+                });
+
+            modelBuilder.Entity("DataAccess.Data.Entities.InvalidMesurementEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("SensorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("TimeStamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Unit")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Value")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InvalidMesurements");
+                });
+
+            modelBuilder.Entity("DataAccess.Data.Entities.MeasurementEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("SensorEntityId")
                         .HasColumnType("uniqueidentifier");
@@ -51,8 +87,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("SensorEntityId");
 
                     b.ToTable("Measurements");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("MeasurementEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Data.Entities.NotificationEntity", b =>
@@ -177,16 +211,6 @@ namespace DataAccess.Migrations
                     b.HasIndex("SensorTypeEntityId");
 
                     b.ToTable("ValidationRules");
-                });
-
-            modelBuilder.Entity("DataAccess.Data.Entities.InvalidMesurementEntity", b =>
-                {
-                    b.HasBaseType("DataAccess.Data.Entities.MeasurementEntity");
-
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasDiscriminator().HasValue("InvalidMesurementEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Data.Entities.MeasurementEntity", b =>
