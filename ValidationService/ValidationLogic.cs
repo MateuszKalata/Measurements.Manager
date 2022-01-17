@@ -77,7 +77,7 @@ namespace ValidationService
         {
             using var context = MeasurementsContextBuilder.BuildMeasurementsContext();
             var sensorTypeId = context.Sensors.First(x => x.Id == sensorId).SensorTypeId;
-            var expectedUnit = context.SensorTypes.First(x => x.Id == sensorId).Unit;
+            var expectedUnit = context.SensorTypes.Find(sensorTypeId)?.Unit;
             return expectedUnit == unit;
         }
 
@@ -90,8 +90,8 @@ namespace ValidationService
         {
             using var context = MeasurementsContextBuilder.BuildMeasurementsContext();
 
-            var sensorTypeId = context.Sensors.FirstOrDefault(x => x.Id == sensorId).SensorTypeId;
-            if (sensorTypeId == Guid.Empty)
+            var sensorTypeId = context.Sensors.FirstOrDefault(x => x.Id == sensorId)?.SensorTypeId;
+            if (sensorTypeId == null)
                 return new List<ValidationRuleDto>();
             var rules = context.ValidationRules
                 .Where(x => x.SensorTypeId == sensorTypeId)

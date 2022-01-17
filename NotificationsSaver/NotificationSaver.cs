@@ -18,7 +18,7 @@ namespace NotificationsSaver
         string topic = "notifications";
         ConsumerConfig configuration = new ConsumerConfig
         {
-            BootstrapServers = "localhost:9092",
+            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "notifications_saver",
             AutoOffsetReset = AutoOffsetReset.Earliest
         };

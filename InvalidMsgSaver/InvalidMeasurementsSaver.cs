@@ -18,7 +18,7 @@ namespace InvalidMsgSaver
         string topic = "invalidmeasurements";
         ConsumerConfig configuration = new ConsumerConfig
         {
-            BootstrapServers = "localhost:9092",
+            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "invalid_measurement_saver",
             AutoOffsetReset = AutoOffsetReset.Earliest
         };

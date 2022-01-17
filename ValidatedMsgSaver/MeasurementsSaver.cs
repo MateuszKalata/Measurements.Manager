@@ -17,7 +17,7 @@ namespace ValidatedMsgSaver
         string topic = "validmeasurements";
         ConsumerConfig configuration = new ConsumerConfig
         {
-            BootstrapServers = "localhost:9092",
+            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "measurement_saver",
             AutoOffsetReset = AutoOffsetReset.Earliest
         };
@@ -27,7 +27,7 @@ namespace ValidatedMsgSaver
 
             CancellationTokenSource cts = new CancellationTokenSource();
             Console.CancelKeyPress += (_, e) => {
-                e.Cancel = true; // prevent the process from terminating.
+                e.Cancel = true;
                 cts.Cancel();
             };
 

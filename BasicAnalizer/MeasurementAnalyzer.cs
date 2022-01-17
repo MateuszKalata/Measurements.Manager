@@ -8,14 +8,14 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using Common.Dto;
 
-namespace ValidationService
+namespace BasicAnalizer
 {
     public class MeasurementAnalyzer
     {
         string measurementsStreamTopic = "validmeasurements";
         ConsumerConfig configuration = new ConsumerConfig
         {
-            BootstrapServers = "localhost:9092",
+            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "analyzers",
             AutoOffsetReset = AutoOffsetReset.Earliest
         };

@@ -6,7 +6,8 @@ namespace InvalidMsgSaver
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var invalidMeasurementsSaver = new InvalidMeasurementsSaver();
+            invalidMeasurementsSaver.ConsumeMeasurements();
         }
     }
 }

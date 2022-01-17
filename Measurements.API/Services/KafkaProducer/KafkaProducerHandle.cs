@@ -17,7 +17,7 @@ namespace Measurements.API.Services.KafkaProducer
             // config.GetSection("Kafka:ProducerSettings").Bind(conf);
             var conf = new ProducerConfig
             {
-                BootstrapServers = "localhost:9092",//docker.for.win.
+                BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",//docker.for.win.
                 ClientId = Dns.GetHostName()
             };
             this.kafkaProducer = new ProducerBuilder<byte[], byte[]>(conf).Build();

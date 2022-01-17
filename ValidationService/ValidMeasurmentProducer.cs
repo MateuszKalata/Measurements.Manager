@@ -17,7 +17,7 @@ namespace ValidationService
             // TODO: Use config here in the featrure for Producer Config and topic
             ProducerConfig config = new ProducerConfig()
             {
-                BootstrapServers = "localhost:9092"
+                BootstrapServers = "localhost:19092,localhost:29092,localhost:39092"
             };
             producer = new ProducerBuilder<string, string>(config).Build();
         }

@@ -2,11 +2,12 @@
 
 namespace BasicAnalizer
 {
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var measurementsAnalyzer = new MeasurementAnalyzer();
+            measurementsAnalyzer.ConsumeMeasurements();
         }
     }
 }
