@@ -17,7 +17,7 @@ namespace ValidationService
         {
             BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "validators",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            EnableAutoCommit = false
         };
         ValidMeasurmentProducer validMeasurmentProducer;
         InvalidMeasurmentProducer invalidMeasurmentProducer;
@@ -53,18 +53,26 @@ namespace ValidationService
                         Console.WriteLine($"Consumed event from topic {measurementsStreamTopic}\n| Key: {cr.Message.Key} | Value: {cr.Message.Value} | Timestamp: {cr.Message.Timestamp} |"); // TODO: change to LOG
                         MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
 
-                        var result = validator.Validate(measurement);
+                        try
+                        {
+                            var result = validator.Validate(measurement);
 
-                        if (string.IsNullOrEmpty(result))
-                        {
-                            Console.WriteLine($"Measurement: {cr.Message.Key} is valid."); // TODO: change to LOG
-                            validMeasurmentProducer.ProduceValidMsg(cr.Message);
+                            if (string.IsNullOrEmpty(result))
+                            {
+                                Console.WriteLine($"Measurement: {cr.Message.Key} is valid."); // TODO: change to LOG
+                                validMeasurmentProducer.ProduceValidMsg(cr.Message);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Measurement: {cr.Message.Key} is NOT valid."); // TODO: change to LOG
+                                invalidMeasurmentProducer.ProduceInvalidMeasurement(measurement, result);
+                            }
+                            consumer.Commit(cr);
                         }
-                        else
+                        catch (Exception e)
                         {
-                            Console.WriteLine($"Measurement: {cr.Message.Key} is NOT valid."); // TODO: change to LOG
-                            invalidMeasurmentProducer.ProduceInvalidMeasurement(measurement, result);
-                        }                        
+                            //no commit
+                        }
                     }
                 }
                 catch (OperationCanceledException)

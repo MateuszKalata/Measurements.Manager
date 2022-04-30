@@ -14,12 +14,12 @@ namespace Measurements.API.Services.Measurements
     public class MeasurementsService : IMeasurementsService
     {
         private readonly KafkaDependentProducer<string, string> kafkaDependentProducer;
-        private string measurementsStreamTopic = "measurements";
+        private string measurementsStreamTopic;
 
-        public MeasurementsService( KafkaDependentProducer<string, string> kafkaDependentProducer )
+        public MeasurementsService( KafkaDependentProducer<string, string> kafkaDependentProducer, IConfiguration configuration )
         {
             this.kafkaDependentProducer = kafkaDependentProducer;
-            // Use config here in the featrure for topic
+            measurementsStreamTopic = configuration.GetValue<string>("MeasurementsTopic");
         }
 
         public async Task SaveMeasurements(MeasurementDto measurementDto)

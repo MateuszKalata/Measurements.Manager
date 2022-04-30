@@ -28,9 +28,8 @@ namespace BasicAnalizer
                         NotificationType = rule.NotificationType,
                         TimeStamp = measurement.TimeStamp.Value
                     });
-                }                  
+                }                
             }
-
             return result;
         }
 

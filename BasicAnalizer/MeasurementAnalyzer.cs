@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
 using Common.Dto;
+using System.Globalization;
 
 namespace BasicAnalizer
 {
@@ -17,7 +18,7 @@ namespace BasicAnalizer
         {
             BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "analyzers",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            EnableAutoCommit = false,
         };
         NotificationProducer notificationProducer;
         AnalyzerLogic analyzer;
@@ -43,22 +44,41 @@ namespace BasicAnalizer
                 consumer.Subscribe(measurementsStreamTopic);
                 try
                 {
-                    Console.WriteLine("Validation started ..."); // TODO: change to LOG
+                    
+                    Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Validation started ..."); // TODO: change to LOG
                     while (true)
                     {
-                        Console.WriteLine("Looking for next valid measurement:");
+                        Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Looking for next valid measurement:");
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed valid measurement from topic {measurementsStreamTopic}\n| Key: {cr.Message.Key} | Value: {cr.Message.Value} | Timestamp: {cr.Message.Timestamp} |"); // TODO: change to LOG
-                        MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
-
-                        var result = analyzer.Analyze(measurement);
-
-                        if (result.Count > 0)
+                        try
                         {
-                            Console.WriteLine($"Measurement {cr.Message.Key} create {result.Count} notifications."); // TODO: change to LOG
-                            result.ForEach(n => notificationProducer.ProduceNotification(n));
+                            Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Consumed valid measurement from topic {measurementsStreamTopic}, partition: {cr.Partition} | Key: {cr.Message.Key} |"); // TODO: change to LOG
+                            MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
+
+                            var result = analyzer.Analyze(measurement);
+
+                            if (result.Count > 0)
+                            {
+                                Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Measurement {cr.Message.Key} create {result.Count} notifications."); // TODO: change to LOG
+                                var tasks = new List<Task>();
+                                result.ForEach(n => tasks.Add(notificationProducer.ProduceNotification(n)));//problem wielu wątków dodać awaitAll albo to co w finally
+                                Task.WaitAll(tasks.ToArray());
+                            }
+
+                            try
+                            {
+                                consumer.Commit(cr);
+                            }
+                            catch (KafkaException e)
+                            {
+                                Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-ERROR-Commit error: {e.Error.Reason}");
+                            }
+
                         }
-                      
+                        catch (Exception e) 
+                        { 
+                            // dont commit
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -67,7 +87,8 @@ namespace BasicAnalizer
                 }
                 finally
                 {
-                    consumer.Close();
+                    consumer.Unsubscribe();
+                    consumer.Dispose();
                 }
             }
         }

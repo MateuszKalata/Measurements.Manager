@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,24 +12,18 @@ namespace Measurements.API.Services.KafkaProducer
     {
         IProducer<byte[], byte[]> kafkaProducer;
 
-        public KafkaProducerHandle(/*IConfiguration config*/)
+        public KafkaProducerHandle(IConfiguration config)
         {
-            // Use config here in the featrure producer config
-            // config.GetSection("Kafka:ProducerSettings").Bind(conf);
-            var conf = new ProducerConfig
-            {
-                BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",//docker.for.win.
-                ClientId = Dns.GetHostName()
-            };
-            this.kafkaProducer = new ProducerBuilder<byte[], byte[]>(conf).Build();
+            var producerConfig = new ProducerConfig();
+            config.GetSection("Kafka:ProducerSettings").Bind(producerConfig);
+
+            this.kafkaProducer = new ProducerBuilder<byte[], byte[]>(producerConfig).Build();
         }
 
         public Handle Handle { get => this.kafkaProducer.Handle; }
 
         public void Dispose()
         {
-            // Block until all outstanding produce requests have completed (with or
-            // without error).
             kafkaProducer.Flush();
             kafkaProducer.Dispose();
         }

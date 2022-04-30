@@ -20,7 +20,7 @@ namespace NotificationsSaver
         {
             BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "notifications_saver",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            EnableAutoCommit = false
         };
 
         public void ConsumeNotifications()
@@ -45,18 +45,25 @@ namespace NotificationsSaver
                         Console.WriteLine($"Consumed notification from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
 
                         NotificationDto notification = JsonSerializer.Deserialize<NotificationDto>(cr.Message.Value);
-
-                        var context = MeasurementsContextBuilder.BuildMeasurementsContext();
-                        context.Notifications.Add(new NotificationEntity()
+                        try
                         {
-                            Id = notification.Id,
-                            MeasurementId = notification.MeasurementId,
-                            NotificationType = notification.NotificationType,
-                            NotificationMsg = notification.NotificationMsg,
-                            TimeStamp = notification.TimeStamp
-                        });
-                        context.SaveChanges();
-                        Console.WriteLine($"Notification {cr.Message.Key} is saved in DB"); // TODO: Logger
+                            var context = MeasurementsContextBuilder.BuildMeasurementsContext();
+                            context.Notifications.Add(new NotificationEntity()
+                            {
+                                Id = notification.Id,
+                                MeasurementId = notification.MeasurementId,
+                                NotificationType = notification.NotificationType,
+                                NotificationMsg = notification.NotificationMsg,
+                                TimeStamp = notification.TimeStamp
+                            });
+                            context.SaveChanges();
+                            consumer.Commit(cr);
+                            Console.WriteLine($"Notification {cr.Message.Key} is saved in DB"); // TODO: Logger
+                        }
+                        catch (Exception e)
+                        {
+                            //no commit
+                        }
                     }
                 }
                 catch (OperationCanceledException)

@@ -20,7 +20,7 @@ namespace InvalidMsgSaver
         {
             BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "invalid_measurement_saver",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            EnableAutoCommit = false
         };
 
         public void ConsumeMeasurements()
@@ -45,18 +45,25 @@ namespace InvalidMsgSaver
                         Console.WriteLine($"Consumed event from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
 
                         InvalidMeasurementDto measurement = JsonSerializer.Deserialize<InvalidMeasurementDto>(cr.Message.Value);
-
-                        var context = MeasurementsContextBuilder.BuildMeasurementsContext();
-                        context.InvalidMesurements.Add(new InvalidMesurementEntity()
+                        try
                         {
-                            Id = measurement.Id,
-                            Value = measurement.Value,
-                            Unit = measurement.Unit,
-                            TimeStamp = measurement.TimeStamp,
-                            SensorId = measurement.SensorId
-                        });
-                        context.SaveChanges();
-                        Console.WriteLine($"Measurement {cr.Message.Key} is saved in DB"); // TODO: Logger
+                            var context = MeasurementsContextBuilder.BuildMeasurementsContext();
+                            context.InvalidMesurements.Add(new InvalidMesurementEntity()
+                            {
+                                Id = measurement.Id,
+                                Value = measurement.Value,
+                                Unit = measurement.Unit,
+                                TimeStamp = measurement.TimeStamp,
+                                SensorId = measurement.SensorId
+                            });
+                            context.SaveChanges();
+                            consumer.Commit(cr);
+                            Console.WriteLine($"Measurement {cr.Message.Key} is saved in DB"); // TODO: Logger
+                        }
+                        catch (Exception e)
+                        {
+                            // no commmit
+                        }
                     }
                 }
                 catch (OperationCanceledException)

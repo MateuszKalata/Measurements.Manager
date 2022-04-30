@@ -20,13 +20,13 @@ namespace MailAlertService
         {
             BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "notification_alerts",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            EnableAutoCommit = false,
         };
         MailSender mailSender;
 
         public NotificationsConsumer()
         {
-            mailSender = new MailSender("user", "passwd");
+            mailSender = new MailSender("proswbfh@gmail.com", "pswd");
         }
 
         public void ConsumeNotifications()
@@ -48,16 +48,24 @@ namespace MailAlertService
                     {
                         Console.WriteLine("Looking for next item:"); // TODO: Logger
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed event from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
+                        Console.WriteLine($"Consumed notification from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
 
                         NotificationDto notification = JsonSerializer.Deserialize<NotificationDto>(cr.Message.Value);
-                        
-                        if(notification.NotificationType == NotificationType.Emergency)
+                        try
                         {
-                            var recipients = GetRecipients();
-                            mailSender.SendGmail("Emergency", notification.NotificationMsg, recipients , "user");
-                            Console.WriteLine($"Emergency notification {cr.Message.Key} is sent to users"); // TODO: Logger
-                        }   
+                            if (notification.NotificationType == NotificationType.Emergency)
+                            {
+                                var recipients = GetRecipients();
+                                mailSender.SendGmail("Emergency", notification.NotificationMsg, recipients, "proswbfh@gmail.com");                               
+                                Console.WriteLine($"Emergency notification {cr.Message.Key} is sent to users"); // TODO: Logger
+                            }
+                            consumer.Commit(cr);
+                        }
+                        catch (Exception e)
+                        {
+                            // no commit
+                            Console.WriteLine($"Emergency notification {cr.Message.Key} is NOT sent to users");
+                        }
                     }
                 }
                 catch (OperationCanceledException)

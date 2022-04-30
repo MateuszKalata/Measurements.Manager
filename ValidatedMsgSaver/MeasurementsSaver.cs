@@ -19,7 +19,7 @@ namespace ValidatedMsgSaver
         {
             BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
             GroupId = "measurement_saver",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            EnableAutoCommit = false
         };
 
         public void ConsumeMeasurements()
@@ -45,17 +45,26 @@ namespace ValidatedMsgSaver
 
                         MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
 
-                        var context = MeasurementsContextBuilder.BuildMeasurementsContext();
-                        context.Measurements.Add(new MeasurementEntity()
+                        try
                         {
-                            Id = measurement.Id,
-                            Value = measurement.Value.Value,
-                            Unit = measurement.Unit,
-                            TimeStamp = measurement.TimeStamp.Value,
-                            SensorId = measurement.SensorId.Value
-                        });
-                        context.SaveChanges();
-                        Console.WriteLine($"Measurement {cr.Message.Key} is saved in DB");
+                            var context = MeasurementsContextBuilder.BuildMeasurementsContext();
+                            context.Measurements.Add(new MeasurementEntity()
+                            {
+                                Id = measurement.Id,
+                                Value = measurement.Value.Value,
+                                Unit = measurement.Unit,
+                                TimeStamp = measurement.TimeStamp.Value,
+                                SensorId = measurement.SensorId.Value
+                            });
+                            context.SaveChanges();
+                            //consumer.Commit(cr);
+                            consumer.Commit(new List<TopicPartitionOffset>(){ cr.TopicPartitionOffset});
+                            Console.WriteLine($"Measurement {cr.Message.Key} is saved in DB");
+                        }
+                        catch (Exception e)
+                        {
+                            // no commit
+                        }
                     }
                 }
                 catch (OperationCanceledException)

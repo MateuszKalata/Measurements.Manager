@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using Measurements.API.Services.KafkaProducer;
 using Measurements.API.Services.Measurements;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Net;
 using System.Text.Json;
@@ -15,10 +16,12 @@ namespace Measurements.API.Controllers
     public class MeasurementsController : ControllerBase
     {
         IMeasurementsService measurementsService;
+        IConfiguration configuration;
 
-        public MeasurementsController(IMeasurementsService measurementsService)
+        public MeasurementsController(IMeasurementsService measurementsService, IConfiguration configuration)
         {
             this.measurementsService = measurementsService;
+            this.configuration = configuration;
         }
 
         [HttpPost]
@@ -40,6 +43,12 @@ namespace Measurements.API.Controllers
             }
 
             return Ok();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetField()
+        {
+            return Ok(configuration.GetValue<string>("BootstrapServers"));
         }
     }
 }

@@ -26,7 +26,7 @@ namespace MailAlertService
         public bool SendGmail(string subject, string content, List<string> recipients, string from)
         {
             if (recipients == null || recipients.Count == 0)
-                throw new ArgumentException("recipients");
+                Console.WriteLine("throw new ArgumentException('recipients');");
 
             using (var msg = new MailMessage(from, recipients[0], subject, content))
             {
@@ -38,10 +38,11 @@ namespace MailAlertService
                     gmailClient.Send(msg);
                     return true;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     // TODO: Handle the exception
-                    return false;
+                    //return false;
+                    throw;
                 }
             }
         }
