@@ -2,6 +2,9 @@
 using Confluent.Kafka;
 using DataAccess.Data.Context;
 using DataAccess.Data.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,14 +17,18 @@ namespace NotificationsSaver
 {
     public class NotificationSaver
     {
-        // TODO: Load config and topic from file
-        string topic = "notifications";
-        ConsumerConfig configuration = new ConsumerConfig
+        private readonly IConfiguration configuration;
+        private readonly ILogger<NotificationSaver> logger;
+        private readonly string topic;
+        ConsumerConfig consumerConfig = new ConsumerConfig();
+
+        public NotificationSaver(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
-            GroupId = "notifications_saver",
-            EnableAutoCommit = false
-        };
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<NotificationSaver>();
+            configuration.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            topic = configuration.GetValue<string>("NotificationsTopic");
+        }
 
         public void ConsumeNotifications()
         {
@@ -32,17 +39,15 @@ namespace NotificationsSaver
                 cts.Cancel();
             };
 
-            using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
             {
                 consumer.Subscribe(topic);
                 try
                 {
-                    Console.WriteLine("Processing started ..."); // TODO: Logger
                     while (true)
                     {
-                        Console.WriteLine("Looking for next notification:"); // TODO: Logger
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed notification from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
+                        logger.LogInformation($"Consumed notification from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
 
                         NotificationDto notification = JsonSerializer.Deserialize<NotificationDto>(cr.Message.Value);
                         try
@@ -58,11 +63,11 @@ namespace NotificationsSaver
                             });
                             context.SaveChanges();
                             consumer.Commit(cr);
-                            Console.WriteLine($"Notification {cr.Message.Key} is saved in DB"); // TODO: Logger
+                            logger.LogInformation($"Notification {cr.Message.Key} is saved in DB"); // TODO: Logger
                         }
                         catch (Exception e)
                         {
-                            //no commit
+                            logger.LogError(e, "Something went wrong");
                         }
                     }
                 }
