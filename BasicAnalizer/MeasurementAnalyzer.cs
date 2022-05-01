@@ -1,33 +1,38 @@
 ﻿using Confluent.Kafka;
 using System;
+using Common.Dto;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text.Json;
-using Common.Dto;
-using System.Globalization;
+
 
 namespace BasicAnalizer
 {
     public class MeasurementAnalyzer
     {
-        string measurementsStreamTopic = "validmeasurements";
-        ConsumerConfig configuration = new ConsumerConfig
-        {
-            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
-            GroupId = "analyzers",
-            EnableAutoCommit = false,
-        };
+        private readonly IConfiguration configuration;
+        private readonly ILogger<MeasurementAnalyzer> logger;
+        private readonly string topic;
+        ConsumerConfig consumerConfig = new ConsumerConfig();
         NotificationProducer notificationProducer;
         AnalyzerLogic analyzer;
 
-        public MeasurementAnalyzer()
+        public MeasurementAnalyzer(
+            IConfiguration configuration, 
+            ILoggerFactory loggerFactory, 
+            NotificationProducer notificationProducer, 
+            AnalyzerLogic analyzer)
         {
-            // TODO: Use config here in the featrure for topic & Consumer Config
-            notificationProducer = new NotificationProducer();
-            analyzer = new AnalyzerLogic();
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<MeasurementAnalyzer>();
+            this.notificationProducer = notificationProducer;
+            this.analyzer = analyzer;
+
+            configuration.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            topic = configuration.GetValue<string>("ValidMeasurementsTopic");
         }
 
         public void ConsumeMeasurements()
@@ -39,29 +44,26 @@ namespace BasicAnalizer
                 cts.Cancel();
             };
 
-            using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
             {
-                consumer.Subscribe(measurementsStreamTopic);
+                consumer.Subscribe(topic);
                 try
                 {
-                    
-                    Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Validation started ..."); // TODO: change to LOG
                     while (true)
                     {
-                        Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Looking for next valid measurement:");
                         var cr = consumer.Consume(cts.Token);
                         try
                         {
-                            Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Consumed valid measurement from topic {measurementsStreamTopic}, partition: {cr.Partition} | Key: {cr.Message.Key} |"); // TODO: change to LOG
+                            logger.LogInformation($"Consumed valid measurement from topic {topic}, partition: {cr.Partition} | Key: {cr.Message.Key} |");
                             MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
 
                             var result = analyzer.Analyze(measurement);
 
                             if (result.Count > 0)
                             {
-                                Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-INFO-Measurement {cr.Message.Key} create {result.Count} notifications."); // TODO: change to LOG
+                                logger.LogInformation($"Measurement {cr.Message.Key} create {result.Count} notifications.");
                                 var tasks = new List<Task>();
-                                result.ForEach(n => tasks.Add(notificationProducer.ProduceNotification(n)));//problem wielu wątków dodać awaitAll albo to co w finally
+                                result.ForEach(n => tasks.Add(notificationProducer.ProduceNotification(n)));
                                 Task.WaitAll(tasks.ToArray());
                             }
 
@@ -71,7 +73,7 @@ namespace BasicAnalizer
                             }
                             catch (KafkaException e)
                             {
-                                Console.WriteLine($"[{DateTime.Now.ToString("dd.MM.yyyy hh:mm:ss.fff", CultureInfo.InvariantCulture)}]-ERROR-Commit error: {e.Error.Reason}");
+                                logger.LogError(e, $"Commit error: {e.Error.Reason}");
                             }
 
                         }

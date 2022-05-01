@@ -14,7 +14,7 @@ namespace NotificationsSaver
 		static int Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug)
+                .WriteTo.Console(Serilog.Events.LogEventLevel.Debug, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level}] {Message}{NewLine}{Exception}")
                 .MinimumLevel.Debug()
                 .Enrich.FromLogContext().CreateLogger();
 
@@ -42,7 +42,7 @@ namespace NotificationsSaver
 
 			try
 			{
-				Log.Information("Starting service");
+				Log.Information("Starting NotificationSaver service");
 				serviceProvider.GetService<NotificationSaver>().ConsumeNotifications();
 				Log.Information("Ending service");
 			}

@@ -1,26 +1,36 @@
 ﻿using Common.Dto;
 using Confluent.Kafka;
+using DataAccess.Data.Context;
+using DataAccess.Data.Entities;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace BasicAnalizer
 {
     public class NotificationProducer
     {
-        IProducer<string, string> producer;
+        private readonly IProducer<string, string> producer;
+        private readonly IConfiguration configuration;
+        private readonly ILogger<NotificationProducer> logger;
+        private readonly string topic;
+        ProducerConfig producerConfig = new ProducerConfig();
 
-        public NotificationProducer()
+        public NotificationProducer(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            // TODO: Use config here in the featrure for Producer Config and topic
-            ProducerConfig config = new ProducerConfig()
-            {
-                BootstrapServers = "localhost:19092,localhost:29092,localhost:39092"
-            };
-            producer = new ProducerBuilder<string, string>(config).Build();
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<NotificationProducer>();
+
+            configuration.GetSection("Kafka:ProducerSettings").Bind(producerConfig);
+            topic = configuration.GetValue<string>("NotificationsTopic");
+            producer = new ProducerBuilder<string, string>(producerConfig).Build();
         }
 
         public async Task ProduceNotification(NotificationDto notification)
@@ -30,7 +40,8 @@ namespace BasicAnalizer
                 Key = notification.Id.ToString(),
                 Value = JsonSerializer.Serialize(notification)
             };
-            await producer.ProduceAsync("notifications", msg);
+            await producer.ProduceAsync(topic, msg);
+            logger.LogInformation($"Notification for masurement ({notification.MeasurementId}) - produced");
         }
     }
 }

@@ -1,27 +1,30 @@
-﻿using Common.Dto;
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
+using System;
+using Common.Dto;
 using DataAccess.Data.Context;
 using DataAccess.Data.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace InvalidMsgSaver
 {
     public class InvalidMeasurementsSaver
     {
-        // TODO: Load config and topic from file
-        string topic = "invalidmeasurements";
-        ConsumerConfig configuration = new ConsumerConfig
+        private readonly IConfiguration configuration;
+        private readonly ILogger<InvalidMeasurementsSaver> logger;
+        private readonly string topic;
+        ConsumerConfig consumerConfig = new ConsumerConfig();
+
+        public InvalidMeasurementsSaver(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
-            GroupId = "invalid_measurement_saver",
-            EnableAutoCommit = false
-        };
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<InvalidMeasurementsSaver>();
+
+            configuration.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            topic = configuration.GetValue<string>("InvalidMeasurementsTopic");
+        }
 
         public void ConsumeMeasurements()
         {
@@ -32,21 +35,20 @@ namespace InvalidMsgSaver
                 cts.Cancel();
             };
 
-            using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
             {
                 consumer.Subscribe(topic);
                 try
                 {
-                    Console.WriteLine("Processing started ..."); // TODO: Logger
                     while (true)
                     {
-                        Console.WriteLine("Looking for next item:"); // TODO: Logger
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed event from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
-
-                        InvalidMeasurementDto measurement = JsonSerializer.Deserialize<InvalidMeasurementDto>(cr.Message.Value);
+                        
                         try
                         {
+                            logger.LogInformation($"Consumed event from topic {topic} | Key: {cr.Message.Key}|");
+                            InvalidMeasurementDto measurement = JsonSerializer.Deserialize<InvalidMeasurementDto>(cr.Message.Value);
+
                             var context = MeasurementsContextBuilder.BuildMeasurementsContext();
                             context.InvalidMesurements.Add(new InvalidMesurementEntity()
                             {
@@ -57,8 +59,16 @@ namespace InvalidMsgSaver
                                 SensorId = measurement.SensorId
                             });
                             context.SaveChanges();
-                            consumer.Commit(cr);
-                            Console.WriteLine($"Measurement {cr.Message.Key} is saved in DB"); // TODO: Logger
+
+                            try
+                            {
+                                consumer.Commit(cr);
+                                logger.LogInformation($"Measurement {cr.Message.Key} is saved in DB");
+                            }
+                            catch (KafkaException e)
+                            {
+                                logger.LogError(e, $"Commit error: {e.Error.Reason}");
+                            }                          
                         }
                         catch (Exception e)
                         {
