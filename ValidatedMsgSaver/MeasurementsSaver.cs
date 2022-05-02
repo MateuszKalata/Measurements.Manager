@@ -3,24 +3,29 @@ using Confluent.Kafka;
 using DataAccess.Data.Context;
 using DataAccess.Data.Entities;
 using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace ValidatedMsgSaver
 {
     public class MeasurementsSaver
     {
-        string topic = "validmeasurements";
-        ConsumerConfig configuration = new ConsumerConfig
+        private readonly IConfiguration configuration;
+        private readonly ILogger<MeasurementsSaver> logger;
+        private readonly string topic;
+        ConsumerConfig consumerConfig = new ConsumerConfig();
+
+        public MeasurementsSaver(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
-            GroupId = "measurement_saver",
-            EnableAutoCommit = false
-        };
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<MeasurementsSaver>();
+
+            configuration.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            topic = configuration.GetValue<string>("ValidMeasurementsTopic");
+        }
 
         public void ConsumeMeasurements()
         {
@@ -31,17 +36,15 @@ namespace ValidatedMsgSaver
                 cts.Cancel();
             };
 
-            using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
             {
                 consumer.Subscribe(topic);
                 try
                 {
-                    Console.WriteLine("Processing started ...");
                     while (true)
                     {
-                        Console.WriteLine("Looking for next item:");
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed event from topic {topic}\n| Key: {cr.Message.Key}|");
+                        logger.LogInformation($"Consumed event from topic {topic}\n| Key: {cr.Message.Key}|");
 
                         MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
 
@@ -57,9 +60,16 @@ namespace ValidatedMsgSaver
                                 SensorId = measurement.SensorId.Value
                             });
                             context.SaveChanges();
-                            //consumer.Commit(cr);
-                            consumer.Commit(new List<TopicPartitionOffset>(){ cr.TopicPartitionOffset});
-                            Console.WriteLine($"Measurement {cr.Message.Key} is saved in DB");
+                            logger.LogInformation($"Measurement {cr.Message.Key} is saved in DB");
+
+                            try
+                            {
+                                consumer.Commit(cr);
+                            }
+                            catch (KafkaException e)
+                            {
+                                logger.LogError(e, $"Commit error: {e.Error.Reason}");
+                            }
                         }
                         catch (Exception e)
                         {

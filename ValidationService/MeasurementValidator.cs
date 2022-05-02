@@ -1,34 +1,38 @@
 ﻿using Confluent.Kafka;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Text.Json;
 using Common.Dto;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Threading;
 
 namespace ValidationService
 {
     public class MeasurementValidator
     {
-        string measurementsStreamTopic = "measurements";
-        ConsumerConfig configuration = new ConsumerConfig
-        {
-            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
-            GroupId = "validators",
-            EnableAutoCommit = false
-        };
-        ValidMeasurmentProducer validMeasurmentProducer;
-        InvalidMeasurmentProducer invalidMeasurmentProducer;
-        ValidationLogic validator;
+        private readonly IConfiguration configuration;
+        private readonly ILogger<MeasurementValidator> logger;
+        private readonly string topic;
+        private readonly ConsumerConfig consumerConfig = new ConsumerConfig();
+        private readonly ValidMeasurmentProducer validMeasurmentProducer;
+        private readonly InvalidMeasurmentProducer invalidMeasurmentProducer;
+        private readonly ValidationLogic validationLogic;
 
-        public MeasurementValidator()
+        public MeasurementValidator(
+            IConfiguration configuration,
+            ILoggerFactory loggerFactory,
+            ValidMeasurmentProducer validMeasurmentProducer,
+            InvalidMeasurmentProducer invalidMeasurmentProducer,
+            ValidationLogic validationLogic)
         {
-            // TODO: Use config here in the featrure for topic & Consumer Config
-            validMeasurmentProducer = new ValidMeasurmentProducer();
-            invalidMeasurmentProducer = new InvalidMeasurmentProducer();
-            validator = new ValidationLogic();
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<MeasurementValidator>();
+            this.validMeasurmentProducer = validMeasurmentProducer;
+            this.invalidMeasurmentProducer = invalidMeasurmentProducer;
+            this.validationLogic = validationLogic;
+
+            configuration.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            topic = configuration.GetValue<string>("MeasurementsTopic");
         }
 
         public void ConsumeMeasurements()
@@ -40,34 +44,40 @@ namespace ValidationService
                 cts.Cancel();
             };
 
-            using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
             {
-                consumer.Subscribe(measurementsStreamTopic);
+                consumer.Subscribe(topic);
                 try
                 {
-                    Console.WriteLine("Validation started ..."); // TODO: change to LOG
                     while (true)
                     {
-                        Console.WriteLine("Looking for next item:");
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed event from topic {measurementsStreamTopic}\n| Key: {cr.Message.Key} | Value: {cr.Message.Value} | Timestamp: {cr.Message.Timestamp} |"); // TODO: change to LOG
+                        logger.LogInformation($"Consumed event from topic {topic}\n| Key: {cr.Message.Key} | Value: {cr.Message.Value} | Timestamp: {cr.Message.Timestamp} |"); // TODO: change to LOG
                         MeasurementDto measurement = JsonSerializer.Deserialize<MeasurementDto>(cr.Message.Value);
 
                         try
                         {
-                            var result = validator.Validate(measurement);
+                            var result = validationLogic.Validate(measurement);
 
                             if (string.IsNullOrEmpty(result))
                             {
-                                Console.WriteLine($"Measurement: {cr.Message.Key} is valid."); // TODO: change to LOG
-                                validMeasurmentProducer.ProduceValidMsg(cr.Message);
+                                logger.LogInformation($"Measurement: {cr.Message.Key} is valid.");
+                                validMeasurmentProducer.ProduceValidMsg(cr.Message).Wait();
                             }
                             else
                             {
-                                Console.WriteLine($"Measurement: {cr.Message.Key} is NOT valid."); // TODO: change to LOG
-                                invalidMeasurmentProducer.ProduceInvalidMeasurement(measurement, result);
+                                logger.LogInformation($"Measurement: {cr.Message.Key} is NOT valid.");
+                                invalidMeasurmentProducer.ProduceInvalidMeasurement(measurement, result).Wait();
                             }
-                            consumer.Commit(cr);
+
+                            try
+                            {
+                                consumer.Commit(cr);
+                            }
+                            catch (KafkaException e)
+                            {
+                                logger.LogError(e, $"Commit error: {e.Error.Reason}");
+                            }
                         }
                         catch (Exception e)
                         {

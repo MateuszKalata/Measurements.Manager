@@ -1,32 +1,37 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MailAlertService
 {
     public class MailSender
     {
-        private SmtpClient gmailClient;
-        public MailSender(string username, string passwd)
+        private readonly IConfiguration configuration;
+        private readonly ILogger<MailSender> logger;
+        private readonly SmtpClient gmailClient;
+        public MailSender(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<MailSender>();
+            var mail = configuration.GetValue<string>("Mail");
+            var passwd = configuration.GetValue<string>("MailPassword");
             gmailClient = new SmtpClient
             {
                 Host = "smtp.gmail.com",
                 Port = 587,
                 EnableSsl = true,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(username, passwd)
+                Credentials = new NetworkCredential(mail, passwd)
             };
         }
 
         public bool SendGmail(string subject, string content, List<string> recipients, string from)
         {
             if (recipients == null || recipients.Count == 0)
-                Console.WriteLine("throw new ArgumentException('recipients');");
+                logger.LogError(new ArgumentException(), "Lack of recipients");
 
             using (var msg = new MailMessage(from, recipients[0], subject, content))
             {
@@ -40,8 +45,7 @@ namespace MailAlertService
                 }
                 catch (Exception e)
                 {
-                    // TODO: Handle the exception
-                    //return false;
+                    logger.LogError(e, "Something went wrong");
                     throw;
                 }
             }

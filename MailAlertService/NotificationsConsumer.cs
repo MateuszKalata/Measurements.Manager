@@ -1,32 +1,35 @@
 ﻿using Common.Dto;
 using Common.Enums;
 using Confluent.Kafka;
-using DataAccess.Data.Context;
 using System;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using DataAccess.Data.Context;
+using System.Linq;
 
 namespace MailAlertService
 {
     public class NotificationsConsumer
     {
         // TODO: Load config and topic from file
-        string topic = "notifications";
-        ConsumerConfig configuration = new ConsumerConfig
-        {
-            BootstrapServers = "localhost:19092,localhost:29092,localhost:39092",
-            GroupId = "notification_alerts",
-            EnableAutoCommit = false,
-        };
+        private readonly IConfiguration configuration;
+        private readonly ILogger<NotificationsConsumer> logger;
+        private readonly string topic;
+        ConsumerConfig consumerConfig = new ConsumerConfig();
         MailSender mailSender;
 
-        public NotificationsConsumer()
+        public NotificationsConsumer(IConfiguration configuration, ILoggerFactory loggerFactory, MailSender mailSender)
         {
-            mailSender = new MailSender("proswbfh@gmail.com", "pswd");
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<NotificationsConsumer>();
+            this.mailSender = mailSender;
+
+            configuration.GetSection("Kafka:ConsumerSettings").Bind(consumerConfig);
+            topic = configuration.GetValue<string>("NotificationsTopic");
         }
 
         public void ConsumeNotifications()
@@ -38,17 +41,15 @@ namespace MailAlertService
                 cts.Cancel();
             };
 
-            using (var consumer = new ConsumerBuilder<string, string>(configuration).Build())
+            using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
             {
                 consumer.Subscribe(topic);
                 try
                 {
-                    Console.WriteLine("Processing started ..."); // TODO: Logger
                     while (true)
                     {
-                        Console.WriteLine("Looking for next item:"); // TODO: Logger
                         var cr = consumer.Consume(cts.Token);
-                        Console.WriteLine($"Consumed notification from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
+                        logger.LogInformation($"Consumed notification from topic {topic}\n| Key: {cr.Message.Key}|"); // TODO: Logger
 
                         NotificationDto notification = JsonSerializer.Deserialize<NotificationDto>(cr.Message.Value);
                         try
@@ -56,15 +57,23 @@ namespace MailAlertService
                             if (notification.NotificationType == NotificationType.Emergency)
                             {
                                 var recipients = GetRecipients();
-                                mailSender.SendGmail("Emergency", notification.NotificationMsg, recipients, "proswbfh@gmail.com");                               
-                                Console.WriteLine($"Emergency notification {cr.Message.Key} is sent to users"); // TODO: Logger
+                                mailSender.SendGmail("Emergency", notification.NotificationMsg, recipients, "proswbfh@gmail.com");
+                                logger.LogInformation($"Emergency notification {cr.Message.Key} is sent to users"); // TODO: Logger
                             }
-                            consumer.Commit(cr);
+
+                            try
+                            {
+                                consumer.Commit(cr);
+                            }
+                            catch (KafkaException e)
+                            {
+                                logger.LogError(e, $"Commit error: {e.Error.Reason}");
+                            }
                         }
                         catch (Exception e)
                         {
                             // no commit
-                            Console.WriteLine($"Emergency notification {cr.Message.Key} is NOT sent to users");
+                            logger.LogInformation($"Emergency notification {cr.Message.Key} is NOT sent to users");
                         }
                     }
                 }

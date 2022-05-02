@@ -1,9 +1,7 @@
 ﻿using Common.Dto;
 using Confluent.Kafka;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -11,16 +9,20 @@ namespace ValidationService
 {
     public class InvalidMeasurmentProducer
     {
-        IProducer<string, string> producer;
+        private readonly IProducer<string, string> producer;
+        private readonly IConfiguration configuration;
+        private readonly ILogger<InvalidMeasurmentProducer> logger;
+        private readonly string topic;
+        ProducerConfig producerConfig = new ProducerConfig();
 
-        public InvalidMeasurmentProducer()
+        public InvalidMeasurmentProducer(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            // TODO: Use config here in the featrure for Producer Config and topic
-            ProducerConfig config = new ProducerConfig()
-            {
-                BootstrapServers = "localhost:19092,localhost:29092,localhost:39092"
-            };
-            producer = new ProducerBuilder<string, string>(config).Build();
+            this.configuration = configuration;
+            this.logger = loggerFactory.CreateLogger<InvalidMeasurmentProducer>();
+
+            configuration.GetSection("Kafka:ProducerSettings").Bind(producerConfig);
+            topic = configuration.GetValue<string>("InvalidMeasurementsTopic");
+            producer = new ProducerBuilder<string, string>(producerConfig).Build();
         }
 
         public async Task ProduceInvalidMeasurement(MeasurementDto measurement, string errorMsg)
@@ -41,7 +43,8 @@ namespace ValidationService
                 Value = JsonSerializer.Serialize(invalidMeasurement)
             };
 
-            await producer.ProduceAsync("invalidmeasurements", msg); // TODO: handle dalivery
+            await producer.ProduceAsync(topic, msg);
+            logger.LogInformation($"Invalid masurement with Id: {measurement.Id} - produced");
         }
     }
 }

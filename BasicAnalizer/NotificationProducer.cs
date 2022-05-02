@@ -1,16 +1,8 @@
 ﻿using Common.Dto;
 using Confluent.Kafka;
-using DataAccess.Data.Context;
-using DataAccess.Data.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BasicAnalizer
